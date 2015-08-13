@@ -4,7 +4,7 @@ library(magrittr)
 library(RCurl)
 library(plyr)
 library(dplyr)
-setwd('/homes/tscott1/win/user/oweb2014_grants')
+setwd('/homes/tscott1/win/user/oconee/Code/R')
 
 url <- "http://apps.wrd.state.or.us/apps/oweb/fiscal/default.aspx"
 your.username = 'grantee'
@@ -14,22 +14,121 @@ require(RCurl)
 require(XML)
 
 
-
+#Open OWEB OGMS Session
 oweb.session = rvest::html_session(url)
 oweb.form <- html_form(oweb.session)[[1]]
 
+#add login data
 oweb.form <- set_values(oweb.form, txtuser = "grantee",
                         txtpwd = 'oweb') 
 
-regions = paste('Region',1:6)
-
+#submit login data, follow link to ogms database
 temp = submit_form(oweb.session,oweb.form) %>%
   rvest::follow_link(,i = 'OGMS Search')  
 
+#set query values
 search.form = html_form(temp)[[1]]
 search.form = set_values(search.form,txtbegin='01/01/2013',txtend = '12/31/2013')
+#submit query
+query.results = submit_form(temp,search.form)
 
-tempdat = submit_form(temp,search.form)
+results = html(query.results)
+
+link.names =  results %>% html_nodes("a") %>% html_attr("href")
+follow.link.names = link.names[grep('whichgrant',link.names)]
+
+project.page = follow_link(query.results,i=which(link.names == follow.link.names[3]))
+
+project.links = project.page %>% html_nodes("a") %>% html_attr("href")
+project.files = project.links[grep('displaypdf',project.links)]
+
+project.page %>% html() %>% html_nodes(xpath='//*[(@id = "grdimage")] | //td//th//a') 
+project.page %>% html() %>% html_nodes(xpath='//td | //a') 
+
+%>% html_attrs('target')
+
+urls <- project.page %>% # feed `main.page` to the next step
+  html_nodes(css='a')   %>% # get the CSS nodes
+  html_attr("href") # extract the URLs
+
+# Get link text
+links <-project.page %>% # feed `main.page` to the next step
+  html_nodes(" a") %>% # get the CSS nodes
+  html_text() # extract the link text
+urls = urls[grep('displaypdf',urls)]
+links = links[grep('displaypdf',urls)]
+
+
+class(project.page)
+
+project.page$handle
+
+jump_to(project.page,urls[1]),'versiontest.pdf')
+
+
+formtest = postForm("http://apps.wrd.state.or.us/apps/oweb/fiscal/default.aspx",
+         'txtuser' = "grantee", 'txtpwd' = 'oweb',
+         style = "POST")
+
+
+chandle = getCurlHandle(project.page)
+getURL(pdf.link$url,chandle)
+
+download.file(url=pdf.link$url,destfile='test.pdf')
+download.file(pdf.link,'test.pdf')
+test = follow_link(project.page,css = urls[1])
+pdf.link
+
+ss(test)
+
+
+class(test)
+L <- dir(".",pattern="*.pdf")
+file.info(L)
+file.rename(identifiedName, meaningFullName)
+
+library(downloader)
+filename<-paste("collected/", str_match(myurl, "UniqueID=(.+)")[2], ".pdf", sep="")
+download(myurl, filename)
+Sys.sleep(2)
+urls[1]
+downloader::download(url = urls[1],'test.pdf',mode='wb')
+"downloader.zip", mode = "wb")
+for (myurl in pdfstocollect) {
+  filename<-paste("collected/", str_match(myurl, "UniqueID=(.+)")[2], ".pdf", sep="")
+  download(myurl, filename)
+  Sys.sleep(2)
+}
+
+download.file(urls[1],destfile='test.pdf')
+
+html_attrs
+project.page %>% html_nodes("table") %>% `[`(8) %>% html_nodes("img")
+
+html_attr('a')
+
+ ?html_attr
+
+tes
+
+t = follow_link(x = query.results, i = link.names[1])
+
+html(query.results)
+
+
+html_nodes(query.results,'center') %>% html_nodes('a')
+ateam %>% html_nodes("center") %>% html_nodes("td")
+
+
+
+follow_link(x, i, css, xpath, ...)
+
+
+
+
+xml_structure(results)
+
+
 refdat = submit_form(temp,search.form) %>%
 html() %>%
   html_table(header = T,trim = T,fill = T)
